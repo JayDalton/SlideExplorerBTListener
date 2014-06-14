@@ -48,34 +48,34 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="#Accessory">
-      <HintPath>..\..\..\..\..\..\Program Files\VMscope\VM Slide Explorer 4.0\#Accessory.dll</HintPath>
+      <HintPath>..\..\Program Files\VMscope\VM Slide Explorer 4.0\#Accessory.dll</HintPath>
     </Reference>
     <Reference Include="#Accessory.CognitionMaster">
-      <HintPath>..\..\..\..\..\..\Program Files\VMscope\VM Slide Explorer 4.0\#Accessory.CognitionMaster.exe</HintPath>
+      <HintPath>..\..\Program Files\VMscope\VM Slide Explorer 4.0\#Accessory.CognitionMaster.exe</HintPath>
     </Reference>
     <Reference Include="#Accessory.CognitionMaster.DefaultPlugins">
-      <HintPath>..\..\..\..\..\..\Program Files\VMscope\VM Slide Explorer 4.0\#Accessory.CognitionMaster.DefaultPlugins.dll</HintPath>
+      <HintPath>..\..\Program Files\VMscope\VM Slide Explorer 4.0\#Accessory.CognitionMaster.DefaultPlugins.dll</HintPath>
     </Reference>
     <Reference Include="#Accessory.CognitionMaster.Professional.Suite">
-      <HintPath>..\..\..\..\..\..\Program Files\VMscope\VM Slide Explorer 4.0\#Accessory.CognitionMaster.Professional.Suite.dll</HintPath>
+      <HintPath>..\..\Program Files\VMscope\VM Slide Explorer 4.0\#Accessory.CognitionMaster.Professional.Suite.dll</HintPath>
     </Reference>
     <Reference Include="#Accessory.CognitionMaster.WholeSlideImageSupport">
-      <HintPath>..\..\..\..\..\..\Program Files\VMscope\VM Slide Explorer 4.0\#Accessory.CognitionMaster.WholeSlideImageSupport.dll</HintPath>
+      <HintPath>..\..\Program Files\VMscope\VM Slide Explorer 4.0\#Accessory.CognitionMaster.WholeSlideImageSupport.dll</HintPath>
     </Reference>
     <Reference Include="#Accessory.GenericBusinessClient">
-      <HintPath>..\..\..\..\..\..\Program Files\VMscope\VM Slide Explorer 4.0\#Accessory.GenericBusinessClient.exe</HintPath>
+      <HintPath>..\..\Program Files\VMscope\VM Slide Explorer 4.0\#Accessory.GenericBusinessClient.exe</HintPath>
     </Reference>
     <Reference Include="#Accessory.GenericBusinessClient.DefaultPlugins">
-      <HintPath>..\..\..\..\..\..\Program Files\VMscope\VM Slide Explorer 4.0\#Accessory.GenericBusinessClient.DefaultPlugins.dll</HintPath>
+      <HintPath>..\..\Program Files\VMscope\VM Slide Explorer 4.0\#Accessory.GenericBusinessClient.DefaultPlugins.dll</HintPath>
     </Reference>
     <Reference Include="#Accessory.Imaging">
-      <HintPath>..\..\..\..\..\..\Program Files\VMscope\VM Slide Explorer 4.0\#Accessory.Imaging.dll</HintPath>
+      <HintPath>..\..\Program Files\VMscope\VM Slide Explorer 4.0\#Accessory.Imaging.dll</HintPath>
     </Reference>
     <Reference Include="#Accessory.Licensing.Client">
-      <HintPath>..\..\..\..\..\..\Program Files\VMscope\VM Slide Explorer 4.0\#Accessory.Licensing.Client.DLL</HintPath>
+      <HintPath>..\..\Program Files\VMscope\VM Slide Explorer 4.0\#Accessory.Licensing.Client.DLL</HintPath>
     </Reference>
     <Reference Include="ICSharpCode.TextEditor">
-      <HintPath>..\..\..\..\..\..\Program Files\VMscope\VM Slide Explorer 4.0\ICSharpCode.TextEditor.dll</HintPath>
+      <HintPath>..\..\Program Files\VMscope\VM Slide Explorer 4.0\ICSharpCode.TextEditor.dll</HintPath>
     </Reference>
     <Reference Include="InTheHand.Net.Personal, Version=3.5.605.0, Culture=neutral, PublicKeyToken=ea38caa273134499, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -87,20 +87,17 @@
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.XML" />
     <Reference Include="System.Xml.Linq" />
-    <Reference Include="TestPlugin">
-      <HintPath>..\..\..\..\..\..\Program Files\VMscope\VM Slide Explorer 4.0\TestPlugin.dll</HintPath>
-    </Reference>
     <Reference Include="VMscope.InteropCore">
-      <HintPath>..\..\..\..\..\..\Program Files\VMscope\VM Slide Explorer 4.0\VMscope.InteropCore.dll</HintPath>
+      <HintPath>..\..\Program Files\VMscope\VM Slide Explorer 4.0\VMscope.InteropCore.dll</HintPath>
     </Reference>
     <Reference Include="VMscope.Resources">
-      <HintPath>..\..\..\..\..\..\Program Files\VMscope\VM Slide Explorer 4.0\VMscope.Resources.dll</HintPath>
+      <HintPath>..\..\Program Files\VMscope\VM Slide Explorer 4.0\VMscope.Resources.dll</HintPath>
     </Reference>
     <Reference Include="VMscope.VirtualSlideAccess">
-      <HintPath>..\..\..\..\..\..\Program Files\VMscope\VM Slide Explorer 4.0\VMscope.VirtualSlideAccess.dll</HintPath>
+      <HintPath>..\..\Program Files\VMscope\VM Slide Explorer 4.0\VMscope.VirtualSlideAccess.dll</HintPath>
     </Reference>
     <Reference Include="VMscope.VMSlideExplorer">
-      <HintPath>..\..\..\..\..\..\Program Files\VMscope\VM Slide Explorer 4.0\VMscope.VMSlideExplorer.dll</HintPath>
+      <HintPath>..\..\Program Files\VMscope\VM Slide Explorer 4.0\VMscope.VMSlideExplorer.dll</HintPath>
     </Reference>
     <Reference Include="WindowsBase" />
   </ItemGroup>
