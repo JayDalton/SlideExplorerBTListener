@@ -44,7 +44,7 @@
     <DefineConstants>TRACE</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
-    <OutputPath>..\..\Studium\AI Master\Semester2\03 MedicalImageProcessing\VM Slide Explorer 4.0\</OutputPath>
+    <OutputPath>..\VM Slide Explorer 4.0\</OutputPath>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="#Accessory">
@@ -102,6 +102,7 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BTContent.cs" />
     <Compile Include="BTControl.cs" />
     <Compile Include="BTHandler.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

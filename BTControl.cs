@@ -1,4 +1,5 @@
-﻿using InTheHand.Net;
+﻿using BTControl;
+using InTheHand.Net;
 using InTheHand.Net.Bluetooth;
 using InTheHand.Net.Sockets;
 using InTheHand.Windows.Forms;
@@ -6,6 +7,7 @@ using SharpAccessory.GenericBusinessClient.Plugging;
 using SharpAccessory.Resources;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
@@ -28,6 +30,13 @@ namespace TestPlugin
     private Microscope microscope;
     private TextBox tbListing;
     private TextBox textInput;
+    private ListBox lbListing;
+    private bool isConnected;
+
+    // Nachrichtenliste
+    private object _listlock = new object();
+    private BindingSource Source = new BindingSource();
+    private BindingList<BTContent> Items = new BindingList<BTContent>();
 
     private string receivedData = "";
     public string ReceivedData
@@ -91,13 +100,13 @@ namespace TestPlugin
         wtbConnect.ToolTipText = "Connect by Select";
         wtbConnect.Click += new EventHandler(wtbConnectBySelect_Click);
 
-        textInput = new TextBox();
-        textInput.Parent = microscope.DockAreas.Bottom;
-        textInput.Dock = DockStyle.Bottom;
-        textInput.BackColor = Color.Yellow;
-        textInput.WordWrap = false;
-        textInput.Visible = true;
-        textInput.KeyPress += new KeyPressEventHandler(textBoxInput_KeyPress);
+        //textInput = new TextBox();
+        //textInput.Parent = microscope.DockAreas.Bottom;
+        //textInput.Dock = DockStyle.Bottom;
+        //textInput.BackColor = Color.Yellow;
+        //textInput.WordWrap = false;
+        //textInput.Visible = true;
+        //textInput.KeyPress += new KeyPressEventHandler(textBoxInput_KeyPress);
 
         tbListing = new TextBox();
         tbListing.Parent = microscope.DockAreas.Bottom;
@@ -109,6 +118,21 @@ namespace TestPlugin
         tbListing.Visible = true;
         tbListing.Height = 100;
 
+        lbListing = new ListBox();
+        lbListing.Parent = microscope.DockAreas.Bottom;
+        lbListing.BackColor = Color.Purple;
+        lbListing.Visible = true;
+        lbListing.Height = 100;
+
+        Items.Add(new BTContent { Data = "Zeile eins" });
+        Items.Add(new BTContent { Data = "Zeile zwei" });
+        Items.Add(new BTContent { Data = "Zeile drei" });
+        Source.DataSource = Items;
+
+        lbListing.DataSource = Source;
+        lbListing.DisplayMember = "Data";
+        lbListing.DataBindings.Add(new Binding("Text", Source, "Data", true, DataSourceUpdateMode.OnPropertyChanged));
+
         StartBluetooth();
         AddMessage(MessageSource.Info,
           "Connect to another remote device running the app."
@@ -119,7 +143,7 @@ namespace TestPlugin
         //Unselect the text.
         tbListing.Select(0, 0);
         // Focus to the input-box.
-        this.textInput.Select();
+        //this.textInput.Select();
       }
     }
 
@@ -550,9 +574,10 @@ namespace TestPlugin
 
     void AddMessage(MessageSource source, string message)
     {
-      EventHandler action = delegate
-      {
+      //EventHandler action = delegate
+      //{
         string prefix;
+        string result;
         switch (source)
         {
           case MessageSource.Local:
@@ -571,12 +596,21 @@ namespace TestPlugin
             prefix = "???:";
             break;
         }
-        AssertOnUiThread();
-        this.tbListing.Text =
-            prefix + message + "\r\n"
-            + this.tbListing.Text;
-      };
-      ThreadSafeRun(action);
+        //AssertOnUiThread();
+        //this.tbListing.Text =
+        //    prefix + message + "\r\n"
+        //    + this.tbListing.Text;
+        result = prefix + message;
+        lock (_listlock)
+        {
+          Items.Insert(0, new BTContent { Data = result });
+          if (50 < Items.Count)
+          {
+            Items.RemoveAt(50);
+          }
+        }
+      //};
+      //ThreadSafeRun(action);
     }
 
     private void ThreadSafeRun(EventHandler action)
