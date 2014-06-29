@@ -2,6 +2,7 @@
 using SharpAccessory.VisualComponents;
 using System;
 using System.Drawing;
+using System.Windows;
 using VMscope.VMSlideExplorer.VisualComponents;
 
 namespace TestPlugin
@@ -70,7 +71,7 @@ namespace TestPlugin
       //viewHeight = nav.DstRectangle.Height;
     }
 
-    public void TranslateView(System.Drawing.PointF p)
+    public void TranslateView(Vector vec)
     {
       if (WsiComposite.IsSelected)
       {
@@ -93,8 +94,9 @@ namespace TestPlugin
         //float dstVecY = pNewY - screenMidY;
         //float dstVecX = pNewX - screenMidX;
         // Vector to BmpMid
-        float neuMidY = bitmapMidY + scale1 * p.Y;
-        float neuMidX = bitmapMidX + scale1 * p.X;
+        Vector v = Vector.Add(new Vector(bitmapMidX, bitmapMidY), Vector.Multiply(scale1, vec));
+        float neuMidY = bitmapMidY + scale1 * (float)vec.Y;
+        float neuMidX = bitmapMidX + scale1 * (float)vec.X;
 
         //MessageBox.Show(
         //  string.Format(

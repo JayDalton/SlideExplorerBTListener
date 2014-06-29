@@ -12,13 +12,14 @@ using System.Globalization;
 using System.IO;
 using System.Net.Sockets;
 using System.Threading;
+using System.Windows;
 using System.Windows.Forms;
 using VMscope.VMSlideExplorer;
 using VMscope.VMSlideExplorer.VisualComponents;
 
 namespace TestPlugin
 {
-  public class BTConnect : Plugin
+  public class BTControl : Plugin
   {
     readonly Guid OurServiceClassId = new Guid("{29913A2D-EB93-40cf-BBB8-DEEE26452197}");
     readonly string OurServiceName = "32feet.NET Chat2";
@@ -134,7 +135,7 @@ namespace TestPlugin
       }
     }
 
-    private void translateView(System.Drawing.PointF p)
+    private void translateView(Vector p)
     {
       foreach (var item in composites)
       {
@@ -142,18 +143,25 @@ namespace TestPlugin
       }
     }
 
-    private System.Drawing.PointF LastPosition;
-
     /*
      * Command Vector Point 
      * C:UP 
      * V:12.345678;43.212313 
      * P:12.345678;43.213123
      * */
+
+    /*
+     * M: Message (Text)
+     * T: Translation (Vektor)
+     * Z: Skalierung (Punkt)
+     * C: Composite (ID)
+     */
    
     private void handleInput(string input)
     {
-      string[] part = input.Split(new char[]{':'}, StringSplitOptions.RemoveEmptyEntries);
+      char[] splitter1 = new char[] { ':' };
+      char[] splitter2 = new char[] { ';' };
+      string[] part = input.Split(splitter1, StringSplitOptions.RemoveEmptyEntries);
       switch (part[0])
       {
         case "T": // Text
@@ -163,17 +171,13 @@ namespace TestPlugin
           AddMessage(MessageSource.Remote, input);
           break;
         case "V": // Vector
-          string[] value = part[1].Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
-          //input = input.Replace(",", ".");
-          //input = input.Replace(";", ",");
-          System.Drawing.PointF ppp = new System.Drawing.PointF(
+          string[] value = part[1].Split(splitter2, StringSplitOptions.RemoveEmptyEntries);
+          Vector vec = new Vector(
             float.Parse(value[0], CultureInfo.InvariantCulture),
             float.Parse(value[1], CultureInfo.InvariantCulture)
           );
-          //System.Windows.Point p = System.Windows.Point.Parse(input);
-          translateView(ppp);
-          LastPosition = ppp;
-          AddMessage(MessageSource.Local, ppp.ToString());
+          translateView(vec);
+          AddMessage(MessageSource.Local, vec.ToString());
           break;
         default:
           AddMessage(MessageSource.Remote, input);
