@@ -6,6 +6,7 @@ using InTheHand.Windows.Forms;
 using SharpAccessory.GenericBusinessClient.Plugging;
 using SharpAccessory.Resources;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -26,128 +27,72 @@ namespace TestPlugin
     readonly Guid OurServiceClassId = new Guid("{29913A2D-EB93-40cf-BBB8-DEEE26452197}");
     readonly string OurServiceName = "32feet.NET Chat2";
 
-    private WsiToolButton wtbConnect;
     private Microscope microscope;
-    private TextBox tbListing;
-    private TextBox textInput;
     private ListBox lbListing;
-    private bool isConnected;
 
     // Nachrichtenliste
     private object _listlock = new object();
     private BindingSource Source = new BindingSource();
     private BindingList<BTContent> Items = new BindingList<BTContent>();
 
-    private string receivedData = "";
-    public string ReceivedData
-    {
-      get { return receivedData; }
-      set
-      {
-        if (value != receivedData)
-        {
-          receivedData = value;
-          
-        }
-      }
-    }
+    public ConcurrentQueue<BTContent> SendItems { get; set; }
 
     volatile bool _closing;
     TextWriter _connWtr;
     BluetoothListener _lsnr;
 
+    List<BTHandler> composites = new List<BTHandler>();
+
+
     protected override void OnBroadcastContext(BroadcastContextEventArgs e)
     {
       base.OnBroadcastContext(e);
+
+      SendItems = new ConcurrentQueue<BTContent>();
 
       if (e.Context is Microscope)
       {
         microscope = e.Context as Microscope;
         microscope.WsiCompositesChanged += OnWsiCompositesChanged;
 
-        wtbConnect = microscope.ToolBar.CreateToolButton();
-        wtbConnect.Image = TangoIconSet.LoadIcon(TangoIcon.Input_Gaming);
-        wtbConnect.ToolTipText = "Disconnect";
-        wtbConnect.Click += new EventHandler(wtbDisconnect_Click);
+        //wtbConnect = microscope.ToolBar.CreateToolButton();
+        //wtbConnect.Image = TangoIconSet.LoadIcon(TangoIcon.Input_Gaming);
+        //wtbConnect.ToolTipText = "Disconnect";
+        //wtbConnect.Click += new EventHandler(wtbDisconnect_Click);
 
-        wtbConnect = microscope.ToolBar.CreateToolButton();
-        wtbConnect.Image = TangoIconSet.LoadIcon(TangoIcon.Input_Gaming);
-        wtbConnect.ToolTipText = "Mode Offline";
-        wtbConnect.Click += new EventHandler(wtbModeNeither_Click);
+        //wtbConnect = microscope.ToolBar.CreateToolButton();
+        //wtbConnect.Image = TangoIconSet.LoadIcon(TangoIcon.Input_Gaming);
+        //wtbConnect.ToolTipText = "Show Radio Information";
+        //wtbConnect.Click += new EventHandler(wtbShowRadioInfo_Click);
 
-        wtbConnect = microscope.ToolBar.CreateToolButton();
-        wtbConnect.Image = TangoIconSet.LoadIcon(TangoIcon.Input_Gaming);
-        wtbConnect.ToolTipText = "Mode Connectable";
-        wtbConnect.Click += new EventHandler(wtbModeConnectable_Click);
-
-        wtbConnect = microscope.ToolBar.CreateToolButton();
-        wtbConnect.Image = TangoIconSet.LoadIcon(TangoIcon.Input_Gaming);
-        wtbConnect.ToolTipText = "Mode Discoverable";
-        wtbConnect.Click += new EventHandler(wtbModeDiscoverable_Click);
-
-        wtbConnect = microscope.ToolBar.CreateToolButton();
-        wtbConnect.Image = TangoIconSet.LoadIcon(TangoIcon.Input_Gaming);
-        wtbConnect.ToolTipText = "Show Radio Information";
-        wtbConnect.Click += new EventHandler(wtbShowRadioInfo_Click);
-
-        wtbConnect = microscope.ToolBar.CreateToolButton();
-        wtbConnect.Image = TangoIconSet.LoadIcon(TangoIcon.Input_Gaming);
-        wtbConnect.ToolTipText = "Connect by Address";
-        wtbConnect.Click += new EventHandler(wtbConnectByAddress_Click);
-
-        wtbConnect = microscope.ToolBar.CreateToolButton();
-        wtbConnect.Image = TangoIconSet.LoadIcon(TangoIcon.Input_Gaming);
-        wtbConnect.ToolTipText = "Connect by Select";
-        wtbConnect.Click += new EventHandler(wtbConnectBySelect_Click);
-
-        //textInput = new TextBox();
-        //textInput.Parent = microscope.DockAreas.Bottom;
-        //textInput.Dock = DockStyle.Bottom;
-        //textInput.BackColor = Color.Yellow;
-        //textInput.WordWrap = false;
-        //textInput.Visible = true;
-        //textInput.KeyPress += new KeyPressEventHandler(textBoxInput_KeyPress);
-
-        tbListing = new TextBox();
-        tbListing.Parent = microscope.DockAreas.Bottom;
-        tbListing.ScrollBars = ScrollBars.Both;
-        tbListing.Dock = DockStyle.Bottom;
-        tbListing.BackColor = Color.Red;
-        tbListing.WordWrap = false;
-        tbListing.Multiline = true;
-        tbListing.Visible = true;
-        tbListing.Height = 100;
+        //tbListing = new TextBox();
+        //tbListing.Parent = microscope.DockAreas.Bottom;
+        //tbListing.ScrollBars = ScrollBars.Both;
+        //tbListing.Dock = DockStyle.Bottom;
+        //tbListing.BackColor = Color.Red;
+        //tbListing.WordWrap = false;
+        //tbListing.Multiline = true;
+        //tbListing.Visible = true;
+        //tbListing.Height = 100;
 
         lbListing = new ListBox();
         lbListing.Parent = microscope.DockAreas.Bottom;
+        lbListing.SelectionMode = SelectionMode.None;
         lbListing.BackColor = Color.Purple;
         lbListing.Visible = true;
         lbListing.Height = 100;
+        lbListing.Width = 600;
 
-        Items.Add(new BTContent { Data = "Zeile eins" });
-        Items.Add(new BTContent { Data = "Zeile zwei" });
-        Items.Add(new BTContent { Data = "Zeile drei" });
         Source.DataSource = Items;
-
         lbListing.DataSource = Source;
         lbListing.DisplayMember = "Data";
         lbListing.DataBindings.Add(new Binding("Text", Source, "Data", true, DataSourceUpdateMode.OnPropertyChanged));
 
         StartBluetooth();
-        AddMessage(MessageSource.Info,
-          "Connect to another remote device running the app."
-          + "  Each person can then enter text in the box at the bottom"
-          + " and hit return to send it."
-          + "  Of course the radio on the target device will have to be"
-          + " in connectable and/or discoverable mode.");
-        //Unselect the text.
-        tbListing.Select(0, 0);
-        // Focus to the input-box.
-        //this.textInput.Select();
+
+        AddMessage(MessageSource.Info, "Waiting for new Connection...");
       }
     }
-
-    List<BTHandler> composites = new List<BTHandler>();
 
     private void OnWsiCompositesChanged(object sender, EventArgs e)
     {
@@ -226,6 +171,7 @@ namespace TestPlugin
       //
       // Always run server?
       StartListener();
+      StartProcessor();
     }
 
     BluetoothAddress BluetoothSelect()
@@ -298,6 +244,24 @@ namespace TestPlugin
       }
     }
 
+    private void StartProcessor()
+    {
+      ThreadPool.QueueUserWorkItem(Process_Runner);
+    }
+
+    private void Process_Runner(object state)
+    {
+      BTContent result;
+      while (true)
+      {
+        if (SendItems.TryDequeue(out result))
+        {
+          handleInput(result.Data);
+          AddMessage(MessageSource.Remote, "Process: " + result.Data);
+        }
+      }
+    }
+
     private void StartListener()
     {
       var lsnr = new BluetoothListener(OurServiceClassId);
@@ -336,7 +300,7 @@ namespace TestPlugin
       var connWtr = new StreamWriter(peerStream);
       connWtr.NewLine = "\r\n"; // Want CR+LF even on UNIX/Mac etc.
       _connWtr = connWtr;
-      ClearScreen();
+      //ClearScreen();
       AddMessage(MessageSource.Info,
           (outbound ? "Connected to " : "Connection from ")
         // Can't guarantee that the Port is set, so just print the address.
@@ -428,7 +392,8 @@ namespace TestPlugin
           break;
         }
         //AddMessage(MessageSource.Remote, line);
-        handleInput(line);
+        //handleInput(line);
+        SendItems.Enqueue(new BTContent { Data = line });
       }//while
       ConnectionCleanup();
     }
@@ -483,86 +448,86 @@ namespace TestPlugin
       BluetoothConnect(addr);
     }
 
-    private void wtbConnectByAddress_Click(object sender, EventArgs e)
-    {
-      var addr = BluetoothAddress.Parse("002233445566");
-      var line = Microsoft.VisualBasic.Interaction.InputBox("Target Address", "Chat2", null, -1, -1);
-      if (string.IsNullOrEmpty(line))
-      {
-        return;
-      }
-      line = line.Trim();
-      if (!BluetoothAddress.TryParse(line, out addr))
-      {
-        MessageBox.Show("Invalid address.");
-        return;
-      }
-      BluetoothConnect(addr);
-    }
+    //private void wtbConnectByAddress_Click(object sender, EventArgs e)
+    //{
+    //  var addr = BluetoothAddress.Parse("002233445566");
+    //  var line = Microsoft.VisualBasic.Interaction.InputBox("Target Address", "Chat2", null, -1, -1);
+    //  if (string.IsNullOrEmpty(line))
+    //  {
+    //    return;
+    //  }
+    //  line = line.Trim();
+    //  if (!BluetoothAddress.TryParse(line, out addr))
+    //  {
+    //    MessageBox.Show("Invalid address.");
+    //    return;
+    //  }
+    //  BluetoothConnect(addr);
+    //}
 
     private void wtbDisconnect_Click(object sender, EventArgs e)
     {
       BluetoothDisconnect();
     }
 
-    private void textBoxInput_KeyPress(object sender, KeyPressEventArgs e)
-    {
-      var cr = e.KeyChar == '\r';
-      var lf = e.KeyChar == '\n';
-      if (cr || lf)
-      {
-        e.Handled = true;
-        SendMessage();
-      }
-    }
+    //private void textBoxInput_KeyPress(object sender, KeyPressEventArgs e)
+    //{
+    //  var cr = e.KeyChar == '\r';
+    //  var lf = e.KeyChar == '\n';
+    //  if (cr || lf)
+    //  {
+    //    e.Handled = true;
+    //    SendMessage();
+    //  }
+    //}
 
-    private void SendMessage()
-    {
-      var message = this.textInput.Text;
-      bool successSend = Send(message);
-      if (successSend)
-      {
-        AddMessage(MessageSource.Local, message);
-        this.textInput.Text = string.Empty;
-      }
-    }
+    //private void SendMessage()
+    //{
+    //  var message = this.textInput.Text;
+    //  bool successSend = Send(message);
+    //  if (successSend)
+    //  {
+    //    AddMessage(MessageSource.Local, message);
+    //    this.textInput.Text = string.Empty;
+    //  }
+    //}
 
     //--
-    private void wtbModeDiscoverable_Click(object sender, EventArgs e)
-    {
-      SetRadioMode(RadioMode.Discoverable);
-    }
+    //private void wtbModeDiscoverable_Click(object sender, EventArgs e)
+    //{
+    //  SetRadioMode(RadioMode.Discoverable);
+    //}
 
-    private void wtbModeConnectable_Click(object sender, EventArgs e)
-    {
-      SetRadioMode(RadioMode.Connectable);
-    }
+    //private void wtbModeConnectable_Click(object sender, EventArgs e)
+    //{
+    //  SetRadioMode(RadioMode.Connectable);
+    //}
 
-    private void wtbModeNeither_Click(object sender, EventArgs e)
-    {
-      SetRadioMode(RadioMode.PowerOff);
-    }
+    //private void wtbModeNeither_Click(object sender, EventArgs e)
+    //{
+    //  SetRadioMode(RadioMode.PowerOff);
+    //}
 
-    private void wtbShowRadioInfo_Click(object sender, EventArgs e)
-    {
-      using (var wtr = new StringWriter())
-      {
-        DisplayPrimaryBluetoothRadio(wtr);
-        AddMessage(MessageSource.Info, wtr.ToString());
-      }
-    }
+    //private void wtbShowRadioInfo_Click(object sender, EventArgs e)
+    //{
+    //  using (var wtr = new StringWriter())
+    //  {
+    //    DisplayPrimaryBluetoothRadio(wtr);
+    //    AddMessage(MessageSource.Info, wtr.ToString());
+    //  }
+    //}
     #endregion
 
     #region Chat Log
-    private void ClearScreen()
-    {
-      EventHandler action = delegate
-      {
-        AssertOnUiThread();
-        this.tbListing.Text = string.Empty;
-      };
-      ThreadSafeRun(action);
-    }
+    //private void ClearScreen()
+    //{
+    //  EventHandler action = delegate
+    //  {
+    //    AssertOnUiThread();
+    //    this.tbListing.Text = string.Empty;
+    //  };
+    //  ThreadSafeRun(action);
+    //}
 
     enum MessageSource
     {
@@ -574,8 +539,6 @@ namespace TestPlugin
 
     void AddMessage(MessageSource source, string message)
     {
-      //EventHandler action = delegate
-      //{
         string prefix;
         string result;
         switch (source)
@@ -596,35 +559,29 @@ namespace TestPlugin
             prefix = "???:";
             break;
         }
-        //AssertOnUiThread();
-        //this.tbListing.Text =
-        //    prefix + message + "\r\n"
-        //    + this.tbListing.Text;
         result = prefix + message;
         lock (_listlock)
         {
-          Items.Insert(0, new BTContent { Data = result });
+          Items.Add(new BTContent { Data = result });
           if (50 < Items.Count)
           {
-            Items.RemoveAt(50);
+            Items.RemoveAt(0);
           }
         }
-      //};
-      //ThreadSafeRun(action);
     }
 
-    private void ThreadSafeRun(EventHandler action)
-    {
-      Control c = this.tbListing;
-      if (c.InvokeRequired)
-      {
-        c.BeginInvoke(action);
-      }
-      else
-      {
-        action(null, null);
-      }
-    }
+    //private void ThreadSafeRun(EventHandler action)
+    //{
+    //  Control c = this.tbListing;
+    //  if (c.InvokeRequired)
+    //  {
+    //    c.BeginInvoke(action);
+    //  }
+    //  else
+    //  {
+    //    action(null, null);
+    //  }
+    //}
     #endregion
 
     private static string MakeExceptionMessage(Exception ex)
@@ -632,10 +589,10 @@ namespace TestPlugin
       return ex.Message;
     }
 
-    private void AssertOnUiThread()
-    {
-      Debug.Assert(!this.tbListing.InvokeRequired, "UI access from non UI thread!");
-    }
+    //private void AssertOnUiThread()
+    //{
+    //  Debug.Assert(!this.tbListing.InvokeRequired, "UI access from non UI thread!");
+    //}
 
 
   }
