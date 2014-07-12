@@ -3,6 +3,7 @@ using SharpAccessory.VisualComponents;
 using System;
 using System.Drawing;
 using System.Windows;
+using System.Windows.Forms;
 using VMscope.VMSlideExplorer.VisualComponents;
 
 namespace TestPlugin
@@ -10,65 +11,57 @@ namespace TestPlugin
   public class BTHandler : WsiHandler
   {
 
-    //private double viewWidth;
-    //public double ViewWidth
-    //{
-    //  get { return viewWidth; }
-    //  set
-    //  {
-    //    if (value != viewWidth)
-    //    {
-    //      viewWidth = value;
-    //    }
-    //  }
-    //}
-
-    //private double viewHeight;
-    //public double ViewHeight
-    //{
-    //  get { return viewHeight; }
-    //  set
-    //  {
-    //    if (value != viewHeight)
-    //    {
-    //      viewHeight = value;
-    //    }
-    //  }
-    //}
+    private float receivedScale = 1;
 
     public BTHandler(WsiComposite wsiComposite)
       : base(wsiComposite)
     {
-      //WsiToolButton wtbThreshold;
-
-      //wtbThreshold = wsiComposite.Tile.ToolBar.CreateToolButton();
-      //wtbThreshold.Image = SharpAccessoryIconSet.LoadIcon(SharpAccessoryIcon.Cursor);
-      //wtbThreshold.ToolTipText = "Connect by Select";
-      //wtbThreshold.Click += delegate { ZoomIn(); };
-
-      //wtbThreshold = wsiComposite.Tile.ToolBar.CreateToolButton();
-      //wtbThreshold.Image = SharpAccessoryIconSet.LoadIcon(SharpAccessoryIcon.Cursor);
-      //wtbThreshold.ToolTipText = "Connect by Address";
-      //wtbThreshold.Click += delegate { ZoomIn(); };
-
-      //wtbThreshold = wsiComposite.Tile.ToolBar.CreateToolButton();
-      //wtbThreshold.Image = SharpAccessoryIconSet.LoadIcon(SharpAccessoryIcon.Cursor);
-      //wtbThreshold.ToolTipText = "Perform Zoom In";
-      //wtbThreshold.Click += delegate { ZoomIn(); };
-
-      //wtbThreshold = wsiComposite.Tile.ToolBar.CreateToolButton();
-      //wtbThreshold.Image = SharpAccessoryIconSet.LoadIcon(SharpAccessoryIcon.Cursor);
-      //wtbThreshold.ToolTipText = "Perform Zoom Out";
-      //wtbThreshold.Click += delegate { ZoomOut(); };
-
-      //wsiComposite.Tile.WsiBox.WsiNavigation.Changed += OnWsiNavigationChanged;
+      wsiComposite.Tile.WsiBox.WsiNavigation.Changed += OnWsiNavigationChanged;
     }
 
     private void OnWsiNavigationChanged(object sender, EventArgs e)
     {
-      //ImageBoxNavigator nav = sender as ImageBoxNavigator;
-      //viewWidth = nav.DstRectangle.Width;
-      //viewHeight = nav.DstRectangle.Height;
+      ImageBoxNavigator nav = sender as ImageBoxNavigator;
+      receivedScale = nav.Zoom;
+    }
+
+    public void ScaleView(Vector p)
+    {
+      if (WsiComposite.IsSelected)
+      {
+        ImageBoxNavigator nav = WsiComposite.Tile.WsiBox.WsiNavigation;
+
+        receivedScale *= (float)p.X;
+
+        //MessageBox.Show("receivedScale: " + receivedScale);
+
+        // Grenze nach oben
+        if (receivedScale > nav.Zoom * nav.ZoomInOutFactor)
+        {
+          if (!nav.IsMinimumZoom)
+          {
+            nav.ZoomIn();
+          }
+        }
+
+        // Grenze nach unten
+        if (receivedScale < nav.Zoom / nav.ZoomInOutFactor)
+        {
+          if (!nav.IsMaximumZoom)
+          {
+            nav.ZoomOut();
+          }
+        }
+
+        //MessageBox.Show(
+        //  "IsMaximumZoom: " + nav.IsMaximumZoom + "\n" +
+        //  "IsMinimumZoom: " + nav.IsMinimumZoom + "\n" +
+        //  "MaximumZoom: " + nav.MaximumZoom + "\n" +
+        //  "MinimumZoom: " + nav.MinimumZoom + "\n" +
+        //  "Zoom: " + nav.Zoom + "\n" +
+        //  "ZoomInOutFactor: " + nav.ZoomInOutFactor
+        //);
+      }
     }
 
     public void TranslateView(Vector vec)
@@ -94,27 +87,5 @@ namespace TestPlugin
         nav.Goto(nav.Zoom, new PointF(neuMidX, neuMidY));
       }
     }
-
-    public void ZoomIn(PointF p)
-    {
-      ImageBoxNavigator nav = WsiComposite.Tile.WsiBox.WsiNavigation;
-
-      //nav.Goto(nav.Zoom, new PointF(x, y));
-      //nav.Goto(nav.zo, p);
-    }
-
-    private void ZoomOut(PointF p)
-    {
-      ImageBoxNavigator nav = WsiComposite.Tile.WsiBox.WsiNavigation;
-
-      //nav.DstRectangle.X = 20;
-      //nav.DstRectangle.Y =+ 20;
-      //float x = nav.SrcRectangle.Y + (nav.SrcRectangle.Height - 1) / 2F;
-      //float y = nav.SrcRectangle.X + (nav.SrcRectangle.Width - 1) / 2F;
-
-      //nav.Goto(nav.Zoom, new PointF(x, y));
-    }
-
-
-}
+  }
 }

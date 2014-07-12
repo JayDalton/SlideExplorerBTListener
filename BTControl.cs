@@ -112,36 +112,49 @@ namespace TestPlugin
       }
     }
 
-    /*
-     * Command Vector Point 
-     * C:UP 
-     * V:12.345678;43.212313 
-     * P:12.345678;43.213123
-     * */
+    private void scaleView(Vector p)
+    {
+      foreach (var item in composites)
+      {
+        item.ScaleView(p);
+      }
+    }
 
     /*
-     * M: Message (Text)
-     * T: Translation (Vektor)
-     * Z: Skalierung (Punkt)
+     * M:Hello World!
+     * T:12.345678;43.212313 
+     * P:12.345678;43.213123
+     * S:12.345678;43.213123
      * C: Composite (ID)
-     */
-   
+     * */
+
     private void handleInput(string input)
     {
       char[] splitter1 = new char[] { ':' };
       char[] splitter2 = new char[] { ';' };
       string[] part = input.Split(splitter1, StringSplitOptions.RemoveEmptyEntries);
+      string[] value;
+      Vector vec;
       switch (part[0])
       {
-        case "T": // Text
+        case "M": // Text
+          AddMessage(MessageSource.Remote, input);
+          break;
+        case "S": // Scale
+          value = part[1].Split(splitter2, StringSplitOptions.RemoveEmptyEntries);
+          vec = new Vector(
+            float.Parse(value[0], CultureInfo.InvariantCulture),
+            float.Parse(value[1], CultureInfo.InvariantCulture)
+          );
+          scaleView(vec);
           AddMessage(MessageSource.Remote, input);
           break;
         case "P": // Point
           AddMessage(MessageSource.Remote, input);
           break;
-        case "V": // Vector
-          string[] value = part[1].Split(splitter2, StringSplitOptions.RemoveEmptyEntries);
-          Vector vec = new Vector(
+        case "T": // Trans
+          value = part[1].Split(splitter2, StringSplitOptions.RemoveEmptyEntries);
+          vec = new Vector(
             float.Parse(value[0], CultureInfo.InvariantCulture),
             float.Parse(value[1], CultureInfo.InvariantCulture)
           );
