@@ -4,7 +4,6 @@ using InTheHand.Net.Bluetooth;
 using InTheHand.Net.Sockets;
 using InTheHand.Windows.Forms;
 using SharpAccessory.GenericBusinessClient.Plugging;
-using SharpAccessory.Resources;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -39,7 +38,7 @@ namespace TestPlugin
 
     volatile bool _closing;
     TextWriter _connWtr;
-    BluetoothListener _lsnr;
+    //BluetoothListener _lsnr;
 
     List<BTHandler> composites = new List<BTHandler>();
 
@@ -55,33 +54,13 @@ namespace TestPlugin
         microscope = e.Context as Microscope;
         microscope.WsiCompositesChanged += OnWsiCompositesChanged;
 
-        //wtbConnect = microscope.ToolBar.CreateToolButton();
-        //wtbConnect.Image = TangoIconSet.LoadIcon(TangoIcon.Input_Gaming);
-        //wtbConnect.ToolTipText = "Disconnect";
-        //wtbConnect.Click += new EventHandler(wtbDisconnect_Click);
-
-        //wtbConnect = microscope.ToolBar.CreateToolButton();
-        //wtbConnect.Image = TangoIconSet.LoadIcon(TangoIcon.Input_Gaming);
-        //wtbConnect.ToolTipText = "Show Radio Information";
-        //wtbConnect.Click += new EventHandler(wtbShowRadioInfo_Click);
-
-        //tbListing = new TextBox();
-        //tbListing.Parent = microscope.DockAreas.Bottom;
-        //tbListing.ScrollBars = ScrollBars.Both;
-        //tbListing.Dock = DockStyle.Bottom;
-        //tbListing.BackColor = Color.Red;
-        //tbListing.WordWrap = false;
-        //tbListing.Multiline = true;
-        //tbListing.Visible = true;
-        //tbListing.Height = 100;
-
         lbListing = new ListBox();
         lbListing.Parent = microscope.DockAreas.Bottom;
         lbListing.SelectionMode = SelectionMode.None;
+        lbListing.Dock = DockStyle.Bottom;
         lbListing.BackColor = Color.Purple;
         lbListing.Visible = true;
         lbListing.Height = 100;
-        lbListing.Width = 600;
 
         Source.DataSource = Items;
         lbListing.DataSource = Source;
@@ -183,8 +162,8 @@ namespace TestPlugin
       // TODO Check radio?
       //
       // Always run server?
-      StartListener();
-      StartProcessor();
+      startInputListener();
+      startInputProcessor();
     }
 
     BluetoothAddress BluetoothSelect()
@@ -257,12 +236,15 @@ namespace TestPlugin
       }
     }
 
-    private void StartProcessor()
+    private void startInputProcessor()
     {
-      ThreadPool.QueueUserWorkItem(Process_Runner);
+      Thread worker = new Thread(new ThreadStart(Process_Runner));
+      worker.Name = "InputProcessor";
+      worker.IsBackground = true;
+      worker.Start();
     }
 
-    private void Process_Runner(object state)
+    private void Process_Runner()
     {
       BTContent result;
       while (true)
@@ -270,27 +252,25 @@ namespace TestPlugin
         if (SendItems.TryDequeue(out result))
         {
           handleInput(result.Data);
-          AddMessage(MessageSource.Remote, "Process: " + result.Data);
         }
       }
     }
 
-    private void StartListener()
+    private void startInputListener()
     {
       var lsnr = new BluetoothListener(OurServiceClassId);
       lsnr.ServiceName = OurServiceName;
       lsnr.Start();
-      _lsnr = lsnr;
-      ThreadPool.QueueUserWorkItem(ListenerAccept_Runner, lsnr);
+
+      Thread worker = new Thread(new ParameterizedThreadStart(Listener_Runner));
+      worker.Name = "InputListener";
+      worker.IsBackground = true;
+      worker.Start(lsnr);
     }
 
-    void ListenerAccept_Runner(object state)
+    void Listener_Runner(object state)
     {
-      var lsnr = (BluetoothListener)_lsnr;
-      // We will accept only one incoming connection at a time. So just
-      // accept the connection and loop until it closes.
-      // To handle multiple connections we would need one threads for
-      // each or async code.
+      BluetoothListener lsnr = state as BluetoothListener;
       while (true)
       {
         var conn = lsnr.AcceptBluetoothClient();
@@ -313,12 +293,7 @@ namespace TestPlugin
       var connWtr = new StreamWriter(peerStream);
       connWtr.NewLine = "\r\n"; // Want CR+LF even on UNIX/Mac etc.
       _connWtr = connWtr;
-      //ClearScreen();
-      AddMessage(MessageSource.Info,
-          (outbound ? "Connected to " : "Connection from ")
-        // Can't guarantee that the Port is set, so just print the address.
-        // For more info see the docs on BluetoothClient.RemoteEndPoint.
-          + remoteEndPoint.Address);
+      AddMessage(MessageSource.Info, (outbound ? "Connected to " : "Connection from ") + remoteEndPoint.Address);
     }
 
     private void ConnectionCleanup()
@@ -532,16 +507,6 @@ namespace TestPlugin
     #endregion
 
     #region Chat Log
-    //private void ClearScreen()
-    //{
-    //  EventHandler action = delegate
-    //  {
-    //    AssertOnUiThread();
-    //    this.tbListing.Text = string.Empty;
-    //  };
-    //  ThreadSafeRun(action);
-    //}
-
     enum MessageSource
     {
       Local,
@@ -552,61 +517,42 @@ namespace TestPlugin
 
     void AddMessage(MessageSource source, string message)
     {
-        string prefix;
-        string result;
-        switch (source)
+      string prefix;
+      string result;
+      switch (source)
+      {
+        case MessageSource.Local:
+          prefix = "Me: ";
+          break;
+        case MessageSource.Remote:
+          prefix = "You: ";
+          break;
+        case MessageSource.Info:
+          prefix = "Info: ";
+          break;
+        case MessageSource.Error:
+          prefix = "Error: ";
+          break;
+        default:
+          prefix = "???:";
+          break;
+      }
+      result = prefix + message;
+      lock (_listlock)
+      {
+        Items.Add(new BTContent { Data = result });
+        if (50 < Items.Count)
         {
-          case MessageSource.Local:
-            prefix = "Me: ";
-            break;
-          case MessageSource.Remote:
-            prefix = "You: ";
-            break;
-          case MessageSource.Info:
-            prefix = "Info: ";
-            break;
-          case MessageSource.Error:
-            prefix = "Error: ";
-            break;
-          default:
-            prefix = "???:";
-            break;
+          Items.RemoveAt(0);
         }
-        result = prefix + message;
-        lock (_listlock)
-        {
-          Items.Add(new BTContent { Data = result });
-          if (50 < Items.Count)
-          {
-            Items.RemoveAt(0);
-          }
-        }
+      }
     }
-
-    //private void ThreadSafeRun(EventHandler action)
-    //{
-    //  Control c = this.tbListing;
-    //  if (c.InvokeRequired)
-    //  {
-    //    c.BeginInvoke(action);
-    //  }
-    //  else
-    //  {
-    //    action(null, null);
-    //  }
-    //}
     #endregion
 
     private static string MakeExceptionMessage(Exception ex)
     {
       return ex.Message;
     }
-
-    //private void AssertOnUiThread()
-    //{
-    //  Debug.Assert(!this.tbListing.InvokeRequired, "UI access from non UI thread!");
-    //}
-
 
   }
 
