@@ -23,8 +23,9 @@ namespace TestPlugin
 {
   public class BTControl : Plugin
   {
-    readonly Guid OurServiceClassId = new Guid("{29913A2D-EB93-40cf-BBB8-DEEE26452197}");
-    readonly string OurServiceName = "32feet.NET Chat2";
+    readonly Guid OurServiceClassId = new Guid("{0ec7250a-955f-442b-a342-4efbe67969f5}");
+    //readonly Guid OurServiceClassId = new Guid("{29913A2D-EB93-40cf-BBB8-DEEE26452197}");
+    readonly string OurServiceName = "SlideExplorer 4.0 Bluetooth Controller";
 
     private Microscope microscope;
     private ListBox lbListing;
@@ -38,7 +39,6 @@ namespace TestPlugin
 
     volatile bool _closing;
     TextWriter _connWtr;
-    //BluetoothListener _lsnr;
 
     List<BTHandler> composites = new List<BTHandler>();
 
@@ -48,6 +48,9 @@ namespace TestPlugin
       base.OnBroadcastContext(e);
 
       SendItems = new ConcurrentQueue<BTContent>();
+
+      Guid id = Guid.NewGuid();
+      string s = id.ToString();
 
       if (e.Context is Microscope)
       {
