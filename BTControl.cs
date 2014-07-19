@@ -36,6 +36,7 @@ namespace TestPlugin
     private BindingList<BTContent> Items = new BindingList<BTContent>();
 
     public ConcurrentQueue<BTContent> SendItems { get; set; }
+    public ConcurrentQueue<BTContent> RecvItems { get; set; }
 
     volatile bool _closing;
     TextWriter _connWtr;
@@ -48,9 +49,7 @@ namespace TestPlugin
       base.OnBroadcastContext(e);
 
       SendItems = new ConcurrentQueue<BTContent>();
-
-      Guid id = Guid.NewGuid();
-      string s = id.ToString();
+      RecvItems = new ConcurrentQueue<BTContent>();
 
       if (e.Context is Microscope)
       {
@@ -115,37 +114,27 @@ namespace TestPlugin
       char[] splitter1 = new char[] { ':' };
       char[] splitter2 = new char[] { ';' };
       string[] part = input.Split(splitter1, StringSplitOptions.RemoveEmptyEntries);
-      string[] value;
-      Vector vec;
-      switch (part[0])
+      if (0 < part.Length)
       {
-        case "M": // Text
-          AddMessage(MessageSource.Remote, input);
-          break;
-        case "S": // Scale
-          value = part[1].Split(splitter2, StringSplitOptions.RemoveEmptyEntries);
-          vec = new Vector(
-            float.Parse(value[0], CultureInfo.InvariantCulture),
-            float.Parse(value[1], CultureInfo.InvariantCulture)
-          );
-          scaleView(vec);
-          AddMessage(MessageSource.Remote, input);
-          break;
-        case "P": // Point
-          AddMessage(MessageSource.Remote, input);
-          break;
-        case "T": // Trans
-          value = part[1].Split(splitter2, StringSplitOptions.RemoveEmptyEntries);
-          vec = new Vector(
-            float.Parse(value[0], CultureInfo.InvariantCulture),
-            float.Parse(value[1], CultureInfo.InvariantCulture)
-          );
-          translateView(vec);
-          AddMessage(MessageSource.Local, vec.ToString());
-          break;
-        default:
-          AddMessage(MessageSource.Remote, input);
-          break;
+        string[] value = part[1].Split(splitter2, StringSplitOptions.RemoveEmptyEntries);
+        if (0 < value.Length)
+        {
+          switch (part[0])
+          {
+          case "S": // Scale
+            scaleView(new Vector(
+              float.Parse(value[0], CultureInfo.InvariantCulture),
+              float.Parse(value[1], CultureInfo.InvariantCulture)
+            ));
+            break;
+          case "T": // Trans
+            translateView(new Vector(
+              float.Parse(value[0], CultureInfo.InvariantCulture),
+              float.Parse(value[1], CultureInfo.InvariantCulture)
+            ));
+            break;
+          }
+        }
       }
     }
 
@@ -385,6 +374,10 @@ namespace TestPlugin
         //AddMessage(MessageSource.Remote, line);
         //handleInput(line);
         SendItems.Enqueue(new BTContent { Data = line });
+        //if (0 < composites.Count)
+        //{
+        //  composites[0].addInput(new BTContent { Data = line });
+        //}
       }//while
       ConnectionCleanup();
     }
